@@ -1,0 +1,132 @@
+﻿SHOPIFY AI STORE MANAGER
+Technical Architecture, Folder Structure & Working Report
+Prepared: 25 October 2026
+1. Executive Summary
+Shopify AI Store Manager is a Shopify embedded application that helps merchants understand store performance from a single dashboard. Phase 1 focuses on reporting and visibility, not autonomous store changes.
+The dashboard should include:
+Sales and revenue trends
+Order and fulfillment overview
+Product performance, including best sellers and slow-moving products
+Current inventory and low-stock indicators
+Profit estimates only when reliable cost data is available
+Daily, weekly, and monthly dashboard reports
+Out of scope for Phase 1: customer segmentation/insights, AI chat interface, approval-based action execution, and email alerts or scheduled report emails. Email features can be considered later.
+2. Recommended Technology Stack
+Application framework
+Official Shopify React Router app template
+Language
+TypeScript
+UI
+Shopify Polaris + Shopify App Bridge
+Runtime/backend
+Node.js with server-side route loaders/actions
+Shopify integration
+Shopify Admin GraphQL API + webhooks
+Database
+PostgreSQL
+ORM
+Prisma
+Background jobs
+Add a queue/Redis only when sync or report workloads need it
+Testing
+Unit tests, integration tests, and Shopify development-store checks
+3. Proposed Folder and File Structure
+This is a suggested blueprint, not a guaranteed exact match for every Shopify CLI template version. Create the app from Shopify's current official template first, then adapt it while preserving generated auth and config.
+shopify-ai-store-manager/├── app/│   ├── routes/│   │   ├── app.tsx                         # Embedded app layout/navigation│   │   ├── app._index.tsx                  # Main dashboard│   │   ├── app.analytics.tsx               # Sales/revenue analytics│   │   ├── app.products.tsx                # Product performance│   │   ├── app.inventory.tsx               # Stock status and low-stock list│   │   ├── app.orders.tsx                  # Order/fulfillment overview│   │   └── webhooks.*.tsx                  # Required webhook endpoints│   ├── components/│   │   ├── MetricCard.tsx                  # KPI card│   │   ├── DateRangeFilter.tsx             # Date filter│   │   ├── SalesChart.tsx                  # Sales chart│   │   ├── ProductPerformanceTable.tsx     # Best/slow products│   │   └── LowStockTable.tsx               # Inventory warnings│   ├── services/│   │   ├── shopify.server.ts               # Keep/adapt generated Shopify auth client│   │   ├── orders.server.ts                # Fetch and normalize order data│   │   ├── products.server.ts              # Product and variant data│   │   ├── inventory.server.ts             # Inventory quantities│   │   ├── analytics.server.ts             # Aggregations and trends│   │   ├── profit.server.ts                # Qualified profit estimates│   │   └── billing.server.ts               # Plan/subscription checks│   ├── utils/│   │   ├── dates.ts                        # Date ranges│   │   ├── money.ts                        # Currency-safe formatting│   │   ├── validation.ts                   # Input validation│   │   └── permissions.ts                  # Scope/feature checks│   └── types/│       └── analytics.ts                    # Shared TypeScript types├── prisma/│   └── schema.prisma                      # Database models├── tests/│   ├── analytics.test.ts│   ├── inventory.test.ts│   └── profit.test.ts├── public/                                 # Static assets if needed├── .env.example                            # Names/placeholders only; no secrets├── package.json├── tsconfig.json├── vite.config.ts└── README.md
+4. Main Dashboard Modules
+Overview
+Total sales, order count, average order value when calculable, and comparison with a prior period.
+Sales analytics
+Daily/weekly/monthly revenue and order trends with date-range filtering.
+Products
+Rank products by sales/quantity and flag low-performing items using a documented time window.
+Inventory
+Show available quantities and low-stock items using merchant-configured thresholds where possible.
+Orders
+Show order status and fulfillment counts; avoid exposing unnecessary customer personal data.
+Profit estimate
+Use cost-of-goods and known fees only when available. Clearly label exclusions and never call an incomplete estimate net profit.
+Plans
+Gate paid features server-side according to the merchant's active Shopify billing subscription.
+5. How the App Works
+Merchant installs the app from the Shopify development/store listing flow.
+Shopify OAuth/session handling is performed by the official generated app framework.
+The app requests only the Admin API scopes needed for the enabled features.
+Dashboard route loaders request the minimum required fields from Shopify Admin GraphQL API, using pagination.
+Data is normalized and aggregated server-side; repeated expensive calculations can be cached or moved to background jobs.
+The dashboard displays KPIs, charts, product tables, order status, and inventory warnings.
+Webhooks trigger targeted updates for relevant changes, while periodic reconciliation can catch missed events.
+On uninstall, process the required uninstall/privacy webhooks and clean up shop data according to the app's retention policy.
+6. Suggested Data Models
+Shop
+id, shopDomain, installedAt, plan, createdAt, updatedAt
+DailyMetric
+id, shopId, date, grossSales, netSalesIfAvailable, orderCount, currency
+ProductSnapshot
+id, shopId, productGid, title, unitsSold, salesAmount, snapshotDate
+InventorySnapshot
+id, shopId, inventoryItemGid, locationGid, availableQuantity, snapshotAt
+SyncState
+id, shopId, resourceType, cursor, lastSyncedAt, status
+Treat these as starting points. Store only what the product actually needs, define retention/deletion rules, and ensure every tenant-owned record is scoped to the authenticated shop.
+7. Security and Reliability Checklist
+Keep Shopify's generated authentication/session implementation; do not replace it with custom shortcuts.
+Use least-privilege API scopes and request additional access only when a feature requires it.
+Verify webhook HMAC/signatures and make webhook handlers idempotent.
+Isolate database queries by authenticated shop; never trust a shop ID supplied by the browser alone.
+Keep tokens, database credentials, and API secrets in environment variables or a managed secret store.
+Validate query parameters and payloads; rate-limit expensive endpoints and handle API throttling/retries.
+Implement the required Shopify privacy and uninstall webhook flows for the app's distribution model.
+Avoid logging access tokens or unnecessary customer data.
+Use HTTPS, production error monitoring, backups, and migration discipline.
+8. Performance and Scalability
+Fetch only the GraphQL fields the screen needs and paginate large collections.
+Use webhooks for incremental updates instead of repeatedly downloading all store data.
+Aggregate sales and product metrics server-side; add indexed summary tables if query volume grows.
+Cache safe, shop-scoped dashboard results with short TTLs where useful.
+Move heavy historical imports and report generation to background jobs when necessary.
+Handle Shopify GraphQL cost limits, retries, and partial failures gracefully.
+9. Pricing Plan Proposal
+Plan
+Illustrative price
+Included features
+Free
+₹0
+Basic dashboard, order overview, current inventory status
+Basic
+₹799/month
+Sales trends/reports, low-stock indicators, product analytics, 30-day history
+Pro
+₹1,999/month
+Advanced analytics, profit analysis where cost data exists, inventory forecasting, longer history
+Prices are initial hypotheses, not market-validated. Confirm willingness to pay, Shopify billing requirements, tax handling, and local currency presentation before launch. Enforce feature access on the server, not only in UI.
+10. Development Roadmap
+Phase 1 — Foundation
+Create the official Shopify app, configure auth, scopes, database, embedded layout, and development store.
+Phase 2 — Core dashboard
+Build overview KPIs, orders, inventory status, and date filters.
+Phase 3 — Analytics
+Add sales trends, product performance, historical snapshots, and data-quality notes.
+Phase 4 — Billing and hardening
+Implement Free/Basic/Pro entitlement checks, webhook verification, privacy handling, tests, and monitoring.
+Phase 5 — Pro intelligence
+Add forecasting only after sufficient reliable history and validate forecast quality.
+Later
+Consider email alerts and scheduled reports; these are not Phase 1 requirements.
+11. Testing Checklist
+Install, re-authenticate, and uninstall using a Shopify development store.
+Verify each API scope and behavior when permission is missing.
+Test empty stores, large stores, multiple currencies, refunds, cancellations, and date/time boundaries.
+Test inventory across locations and ensure unavailable quantities are not misrepresented.
+Test duplicate/out-of-order webhooks and retry behavior.
+Test shop isolation, expired sessions, billing plan changes, and feature gates.
+Test profit calculations against known sample data and display exclusions clearly.
+Check mobile/responsive dashboard behavior and accessible loading/error/empty states.
+12. Official References
+Shopify app development: https://shopify.dev/docs/apps
+React Router app template: https://shopify.dev/docs/api/shopify-app-react-router
+Admin GraphQL API: https://shopify.dev/docs/api/admin-graphql
+Webhooks: https://shopify.dev/docs/apps/build/webhooks
+App billing: https://shopify.dev/docs/apps/launch/billing
+Privacy requirements: https://shopify.dev/docs/apps/build/privacy-law-compliance
+Implementation note: Shopify APIs, CLI templates, required scopes, and billing behavior evolve. Check the current official documentation and generated template before implementation.

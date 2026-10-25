@@ -1,0 +1,223 @@
+﻿STOREANALYSIS BY PRANSHU SINGH BAGHEL
+Master Prompt 2: Complete Phase-by-Phase Development and Deployment
+ROLE
+Act as the lead full-stack engineer responsible for implementing Storeanalysis using the approved architecture.
+Build the application using TypeScript, Shopify's official React Router app template, Node.js, Polaris, App Bridge, Shopify Admin GraphQL API, webhooks, PostgreSQL and Prisma.
+Execute only the phase explicitly requested. Preserve working functionality and verify all changes.
+PHASE 0 — AUDIT BEFORE CODING
+Inspect the repository, dependencies, current Shopify template, authentication, routes, database schema, environment configuration, tests and Git changes.
+Identify:
+Existing working functionality
+Missing requirements
+Dependency incompatibilities
+Security and privacy risks
+Configuration requirements
+Files likely to be changed
+Do not delete files, upgrade everything or perform destructive migrations.
+Deliver the audit report and wait for approval.
+PHASE 1 — BUILD THE APP FOUNDATION
+Implement or adapt:
+Official Shopify React Router architecture
+TypeScript configuration
+Shopify authentication and session handling
+Polaris and App Bridge
+Embedded app navigation
+Protected server-side routes
+Environment configuration
+Development and production scripts
+Navigation should include Overview, Analytics, Products, Inventory, Orders, and Plans/Settings.
+Acceptance:
+App starts successfully.
+Development-store authentication works.
+Embedded navigation works.
+Protected routes enforce authentication.
+Build and type checks pass.
+PHASE 2 — IMPLEMENT THE DATABASE
+Implement PostgreSQL and Prisma.
+Create appropriate models for shop settings, analytics summaries, product snapshots, inventory snapshots, sync state and webhook deduplication as required.
+Requirements:
+Correct relations, indexes and unique constraints
+Shop-level data isolation
+Decimal-safe money handling
+Explicit currency fields
+Idempotent upserts
+Safe migrations
+Retention and deletion rules
+Do not store unnecessary personal data.
+Acceptance:
+Prisma schema validates.
+Development migration applies.
+CRUD and tenant-isolation tests pass.
+PHASE 3 — BUILD THE DASHBOARD UI
+Create responsive Polaris-based pages for:
+Overview
+Analytics
+Products
+Inventory
+Orders
+Plans and settings
+Add reusable metric cards, tables, charts, date filters, loading indicators, empty states and error messages.
+Do not display fabricated live data. If mock data is used during development, label it clearly.
+Acceptance:
+Responsive layout works.
+UI states are handled.
+Navigation and filters work.
+Accessibility and TypeScript checks pass.
+PHASE 4 — CONNECT SHOPIFY DATA
+Integrate real Shopify data through the current supported Admin GraphQL API.
+Implement data retrieval for:
+Orders and fulfillment
+Products and variants
+Inventory quantities and locations
+Store currency and timezone where needed
+Requirements:
+Verify API fields and scopes.
+Use authenticated server-side requests.
+Use cursor pagination.
+Fetch only necessary fields.
+Handle throttling, errors and partial results.
+Keep tokens out of browser code.
+Isolate data by authenticated shop.
+Display synchronization status.
+Acceptance:
+Test against a Shopify development store.
+Reconcile sample values against Shopify Admin.
+Document required scopes and metric definitions.
+PHASE 5 — IMPLEMENT ANALYTICS
+Implement:
+Sales and revenue trends
+Daily, weekly and monthly reports
+Order count
+Average order value when calculable
+Best-selling products
+Slow-moving products
+Previous-period comparisons
+Low-stock indicators
+Document treatment of refunds, cancellations, discounts, taxes, shipping and test orders.
+Use correct timezone and currency boundaries.
+Profit estimates must use reliable cost and expense data and clearly disclose exclusions. Never label an incomplete estimate as net profit.
+Acceptance:
+Unit tests cover key formulas and edge cases.
+Repeated imports do not double-count metrics.
+Results match documented definitions.
+PHASE 6 — IMPLEMENT WEBHOOKS
+Implement the minimum required webhook topics for relevant order, product and inventory updates.
+Add:
+Authenticity verification
+Delivery deduplication
+Idempotent handlers
+Safe retries
+Out-of-order event handling
+Incremental updates
+Initial synchronization
+Reconciliation for missed updates
+Secret-free structured logs
+Required privacy and uninstall flows
+Acceptance:
+Test valid and invalid signatures.
+Test duplicate and out-of-order events.
+Test retry and recovery behavior.
+Confirm repeated deliveries do not corrupt data.
+PHASE 7 — IMPLEMENT SUBSCRIPTIONS
+Implement exactly three plans.
+Free — ₹0:
+Basic dashboard
+Order overview
+Current inventory
+Basic — illustrative ₹799/month:
+Sales reports
+Product analytics
+Low-stock indicators
+30-day history
+Pro — illustrative ₹1,999/month:
+Advanced analytics
+Qualified profit estimates
+Inventory forecasting
+Longer history
+Prices are provisional.
+Verify the current Shopify billing options and intended distribution model. Use Shopify App Pricing for a new public app when appropriate and supported.
+Implement:
+Subscription state
+Upgrade and downgrade handling
+Cancellation handling
+Plan entitlements
+Server-side feature restrictions
+Pricing and plan comparison UI
+Acceptance:
+All plan restrictions are enforced on the server.
+Direct API calls cannot bypass entitlements.
+Subscription transitions are tested.
+PHASE 8 — BUILD PRO FORECASTING
+Implement inventory forecasting only after sufficient historical data is available.
+Requirements:
+Product-level demand forecasts
+Defined forecast horizon
+Data sufficiency checks
+Stockout and new-product limitations
+Uncertainty and assumptions
+Forecast evaluation metrics
+Pro-only access enforcement
+Do not automatically modify inventory or place orders.
+Acceptance:
+Forecasts are tested against held-out historical data.
+Insufficient data produces a clear warning.
+Free and Basic users cannot access Pro forecast data.
+PHASE 9 — SECURITY AND QA
+Perform a complete security and quality review.
+Test:
+Authentication and session expiry
+Shop isolation
+Missing scopes
+Secret exposure
+Webhook verification
+Duplicate events
+Billing transitions
+Privacy requests and data deletion
+Refunds and cancellations
+Timezone and currency handling
+Empty and large stores
+Database and API failures
+Dependency vulnerabilities
+Fix release-blocking issues and document anything that remains.
+Acceptance:
+Relevant automated tests pass.
+Build and type checks pass.
+Privacy and security requirements are reviewed.
+No unverified claims of Shopify approval are made.
+PHASE 10 — DEPLOY AND PREPARE FOR LAUNCH
+Prepare:
+Production hosting and HTTPS
+Shopify app URLs and redirect URLs
+Production environment variables
+Database migrations and backups
+Webhook endpoints
+Logging and monitoring
+Rollback instructions
+Production smoke tests
+Privacy policy and support information
+App listing materials
+Current Shopify review checklist
+Acceptance:
+Authentication works in production.
+Real data and analytics work.
+Webhook synchronization works.
+Billing entitlements are enforced.
+Critical security and privacy checks pass.
+Do not claim the app has been approved or published unless that has actually happened.
+MANDATORY WORKFLOW FOR EVERY PHASE
+Before coding:
+Inspect the relevant files.
+Explain the plan.
+List the files to be changed.
+Identify risks and prerequisites.
+After coding:
+List files created or modified.
+Run relevant tests, lint, type checks and build commands.
+Report actual command results.
+Explain required environment variable names.
+Provide manual verification steps.
+List incomplete work and known limitations.
+Stop and wait for my approval before the next phase.
+Never invent test results or overwrite working Shopify-generated code without justification.
+Begin with Phase 0 unless I explicitly request another phase.
+Project name: StoreanalysisCreator: Pranshu Singh Baghel

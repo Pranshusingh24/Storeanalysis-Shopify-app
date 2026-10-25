@@ -1,0 +1,260 @@
+﻿STOREANALYSIS BY PRANSHU SINGH BAGHEL
+Master Prompt 1: Complete Architecture, Planning & Technical Blueprint
+ROLE
+Act as a Senior Shopify App Architect, Technical Product Manager, Database Architect and Security Engineer.
+Your responsibility is to plan a production-quality Shopify embedded application named Storeanalysis, created by Pranshu Singh Baghel.
+Follow current official Shopify documentation and create a detailed architecture and implementation plan covering every phase from repository audit to production launch.
+Do not assume outdated APIs, unsupported GraphQL fields or undocumented billing behavior.
+PRODUCT VISION
+Storeanalysis helps Shopify merchants monitor sales, revenue, products, inventory, orders and business performance from one dashboard.
+Required features
+Sales and revenue analytics
+Daily, weekly and monthly reports inside the dashboard
+Order and fulfillment overview
+Best-selling and slow-moving product analytics
+Inventory status and low-stock indicators
+Profit estimates when reliable cost data is available
+Pro-tier inventory forecasting
+Free, Basic and Pro subscriptions
+Excluded from initial release
+Customer segmentation and customer insights
+AI chat interface
+Approval-based action execution
+Automatic changes to products, prices, orders or inventory
+Email alerts and scheduled email reports
+REQUIRED TECHNOLOGY STACK
+TypeScript
+Official Shopify React Router app template
+Node.js
+Shopify Polaris
+Shopify App Bridge
+Shopify Admin GraphQL API
+Shopify webhooks
+PostgreSQL
+Prisma ORM
+Automated testing and type checking
+Use Redis or a background job queue only if the workload requires it and the architectural benefit is justified.
+PHASE 0 — REPOSITORY AUDIT AND DISCOVERY
+Inspect the actual project before recommending changes.
+Analyze:
+Existing files and folder structure
+package.json and lockfile
+Shopify CLI and template version
+Node.js and TypeScript configuration
+Authentication and session handling
+Existing routes and UI
+Prisma schema and database configuration
+Environment variable names
+Tests, scripts and deployment configuration
+Existing Git changes and known issues
+Deliver:
+Current architecture report
+Existing functionality that must be preserved
+Dependency compatibility report
+Security and maintenance risks
+Missing configuration
+Recommended phase sequence
+Do not modify files or perform destructive operations during the audit.
+PHASE 1 — APPLICATION ARCHITECTURE
+Design the embedded Shopify application architecture.
+Specify:
+Frontend and backend responsibilities
+Server-side loaders and actions
+Authentication boundaries
+Shared components and service layers
+Error handling and logging
+Configuration management
+Local development workflow
+Development, staging and production environments
+Use the official Shopify React Router template when starting from scratch. If a compatible project already exists, extend it instead of rebuilding it unnecessarily.
+Deliver a component diagram, request/data-flow explanation and proposed folder structure.
+PHASE 2 — DATABASE AND DATA MODEL
+Design a PostgreSQL database using Prisma.
+Evaluate models for:
+Shop and settings
+Daily analytics summaries
+Product performance snapshots
+Inventory snapshots
+Synchronization state
+Webhook delivery deduplication
+Subscription and feature-entitlement metadata where appropriate
+Define:
+Relations and unique constraints
+Shop-level data isolation
+Indexing strategy
+Currency and decimal-safe financial storage
+Historical data retention
+Migration strategy
+Uninstall and data-deletion behavior
+Do not store unnecessary customer personal information.
+Deliver an ER diagram or equivalent relationship description, schema proposal and migration plan.
+PHASE 3 — DASHBOARD AND UX DESIGN
+Plan a professional Shopify-native dashboard using Polaris and App Bridge.
+Required navigation:
+Overview
+Analytics
+Products
+Inventory
+Orders
+Plans and settings
+Overview should support:
+Sales summary
+Order count
+Average order value when calculable
+Sales trend chart
+Best-selling products
+Slow-moving products
+Low-stock indicators
+Fulfillment overview
+Last synchronization timestamp
+Specify:
+Responsive layouts
+Loading states
+Empty states
+Error states
+Partial-data states
+Accessibility
+Date and currency formatting
+Filters and table behavior
+Do not display fabricated metrics as real store data.
+PHASE 4 — SHOPIFY DATA INTEGRATION
+Plan integration with the current supported Shopify Admin GraphQL API.
+For orders, products and inventory, identify:
+Required fields and connections
+Minimum necessary API scopes
+Pagination approach
+Data normalization
+Rate-limit and retry behavior
+Data access restrictions
+Store timezone and currency handling
+Initial synchronization
+Incremental synchronization
+Reconciliation strategy
+Verify API fields and scopes using current official documentation.
+Deliver query plans, scope justification and a data-flow diagram.
+PHASE 5 — ANALYTICS AND BUSINESS LOGIC
+Define every metric before implementation.
+Plan:
+Sales and revenue trends
+Daily, weekly and monthly aggregation
+Order count
+Average order value
+Best-selling product rankings
+Slow-moving product detection
+Previous-period comparisons
+Low-stock indicators
+Document how refunds, cancellations, taxes, shipping, discounts and test orders affect the metrics.
+Profit analysis must use reliable cost and expense data where available. Clearly identify excluded expenses. Do not label incomplete estimates as net profit.
+Deliver metric definitions, formulas, edge cases and test cases.
+PHASE 6 — WEBHOOKS AND SYNCHRONIZATION
+Design reliable webhook-based synchronization.
+Specify:
+Minimum necessary webhook topics
+Supported subscription configuration
+Authenticity verification
+Duplicate-delivery handling
+Idempotent processing
+Out-of-order event handling
+Retry strategy
+Initial sync
+Periodic reconciliation
+Sync monitoring
+Uninstall and privacy flows
+Assume events can be duplicated, delayed or missed.
+Deliver a webhook matrix and failure-recovery plan.
+PHASE 7 — BILLING AND SUBSCRIPTION PLANS
+Design exactly three plans.
+Free — ₹0:
+Basic dashboard
+Order overview
+Current inventory status
+Basic — illustrative ₹799/month:
+Sales reports
+Product analytics
+Low-stock indicators
+30-day history
+Pro — illustrative ₹1,999/month:
+Advanced analytics
+Qualified profit estimates
+Inventory forecasting
+Longer history
+These prices are hypotheses, not validated market pricing.
+Verify the latest Shopify billing guidance and the intended distribution model. Consider Shopify App Pricing for a new public app when suitable.
+Design:
+Subscription lifecycle
+Plan entitlement model
+Upgrade and downgrade behavior
+Cancellation behavior
+Server-side feature restrictions
+Billing error handling
+Pricing configuration
+Do not create an Advanced plan.
+PHASE 8 — INVENTORY FORECASTING
+Plan forecasting as a later Pro feature.
+Specify:
+Historical data requirements
+Forecast horizon
+Demand calculation
+Seasonality limitations
+Stockout handling
+New-product behavior
+Uncertainty representation
+Forecast evaluation metrics
+Data sufficiency rules
+Do not automate inventory changes or purchase orders.
+If history is insufficient, the app should clearly state that a reliable forecast is unavailable.
+PHASE 9 — SECURITY, PRIVACY AND TESTING
+Plan security and quality assurance covering:
+Authentication and session handling
+Least-privilege scopes
+Shop-level authorization
+Secret management
+Input validation
+Webhook verification
+API throttling
+Database isolation
+Dependency vulnerabilities
+Privacy and data deletion
+Uninstall handling
+Logging and monitoring
+Define unit, integration and end-to-end test coverage.
+Include tests for refunds, multiple currencies, timezone boundaries, duplicate webhooks, missing permissions, billing transitions and large stores.
+Deliver a severity-ranked risk register and release-blocking checklist.
+PHASE 10 — DEPLOYMENT AND LAUNCH READINESS
+Design the production launch plan.
+Cover:
+Hosting and HTTPS
+Production environment variables
+Shopify app URLs and redirect URLs
+Database provisioning and migrations
+Backups and rollback
+Webhook endpoints
+Monitoring and error reporting
+Production smoke tests
+Privacy policy and support details
+App listing preparation
+Current Shopify review requirements
+Do not claim Shopify approval without evidence.
+REQUIRED OUTPUT FOR EVERY PHASE
+For each phase provide:
+Objective
+Current-state findings
+Architecture decisions
+Files or modules affected
+Dependencies and API scopes
+Security and privacy implications
+Acceptance criteria
+Testing strategy
+Risks and mitigations
+Prerequisites for the next phase
+GLOBAL RULES
+Use current official Shopify documentation.
+Preserve existing working functionality.
+Never invent unsupported APIs or fields.
+Never expose secrets.
+Never fabricate metrics or test results.
+Enforce tenant isolation and subscription entitlements server-side.
+Document assumptions explicitly.
+Do not move to the next phase without approval.
+Begin with Phase 0 and produce the complete architecture plan in stages. Wait for my approval before proceeding.
+Brand: StoreanalysisCreator attribution: Pranshu Singh Baghel

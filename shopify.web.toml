@@ -1,0 +1,7 @@
+name = "storeanalysis"
+roles = ["frontend", "backend"]
+webhooks_path = "/webhooks"
+
+[commands]
+dev = "npm run dev:local"
+build = "npm run build"

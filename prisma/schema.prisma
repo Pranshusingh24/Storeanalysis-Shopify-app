@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Shopify session storage required by @shopify/shopify-app-session-storage-prisma
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+// Shop configuration and tenant isolation root
+model Shop {
+  id                 String             @id @default(uuid())
+  shopDomain         String             @unique
+  name               String?
+  email              String?
+  currencyCode       String             @default("INR")
+  ianaTimezone       String             @default("Asia/Kolkata")
+  plan               String             @default("Free") // "Free", "Basic", "Pro"
+  reorderThreshold   Int                @default(10)
+  installedAt        DateTime           @default(now())
+  uninstalledAt      DateTime?
+  dataRetentionUntil DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  dailyMetrics       DailyMetric[]
+  productSnapshots   ProductSnapshot[]
+  inventorySnapshots InventorySnapshot[]
+  syncStates         SyncState[]
+  webhookEvents      WebhookEvent[]
+  subscriptions      Subscription[]
+
+  @@index([shopDomain])
+}
+
+// Aggregated daily performance metrics
+model DailyMetric {
+  id                String   @id @default(uuid())
+  shopId            String
+  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  date              String   // YYYY-MM-DD
+  grossSales        Float    @default(0.0)
+  netSales          Float    @default(0.0)
+  orderCount        Int      @default(0)
+  averageOrderValue Float    @default(0.0)
+  totalRefunds      Float    @default(0.0)
+  totalDiscounts    Float    @default(0.0)
+  totalTaxes        Float    @default(0.0)
+  totalShipping     Float    @default(0.0)
+  currency          String   @default("INR")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([shopId, date])
+  @@index([shopId, date])
+}
+
+// Product performance snapshot for best-selling & slow-moving rankings
+model ProductSnapshot {
+  id                String   @id @default(uuid())
+  shopId            String
+  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  productGid        String
+  title             String
+  handle            String?
+  vendor            String?
+  productType       String?
+  status            String   @default("ACTIVE")
+  unitsSold         Int      @default(0)
+  salesAmount       Float    @default(0.0)
+  inventoryQuantity Int      @default(0)
+  snapshotDate      String   // YYYY-MM-DD
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([shopId, productGid, snapshotDate])
+  @@index([shopId, snapshotDate])
+  @@index([shopId, unitsSold])
+}
+
+// Inventory snapshot for stock monitoring and low-stock alerts
+model InventorySnapshot {
+  id                String   @id @default(uuid())
+  shopId            String
+  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  inventoryItemGid  String
+  variantGid        String?
+  sku               String?
+  title             String
+  locationGid       String?
+  locationName      String?
+  availableQuantity Int      @default(0)
+  reorderThreshold  Int      @default(10)
+  status            String   @default("IN_STOCK") // "IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"
+  snapshotAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([shopId, inventoryItemGid])
+  @@index([shopId, status])
+}
+
+// Synchronization tracking for incremental sync and reconciliation
+model SyncState {
+  id           String    @id @default(uuid())
+  shopId       String
+  shop         Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  resourceType String    // "orders", "products", "inventory"
+  cursor       String?
+  lastSyncedAt DateTime?
+  status       String    @default("IDLE") // "IDLE", "IN_PROGRESS", "SUCCESS", "FAILED"
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([shopId, resourceType])
+  @@index([shopId])
+}
+
+// Webhook delivery deduplication and audit log
+model WebhookEvent {
+  id          String   @id @default(uuid())
+  eventId     String?
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  topic       String
+  payloadHash String
+  status      String   @default("PROCESSED") // "PROCESSED", "FAILED", "IGNORED"
+  processedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([shopId, topic])
+  @@index([shopId, payloadHash])
+}
+
+// Subscription and billing state
+model Subscription {
+  id               String    @id @default(uuid())
+  shopId           String
+  shop             Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  chargeId         String    @unique
+  planName         String    // "Free", "Basic", "Pro"
+  status           String    @default("ACTIVE") // "ACTIVE", "CANCELLED", "PENDING", "EXPIRED"
+  priceAmount      Float     @default(0.0)
+  currency         String    @default("INR")
+  currentPeriodEnd DateTime?
+  test             Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([shopId, status])
+}

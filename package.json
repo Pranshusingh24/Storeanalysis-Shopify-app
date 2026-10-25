@@ -1,0 +1,48 @@
+{
+  "name": "storeanalysis-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Storeanalysis by Pranshu Singh Baghel - Shopify Store Analytics, Product Performance, Inventory & Forecasting Embedded App",
+  "author": "Pranshu Singh Baghel",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "dev": "shopify app dev",
+    "dev:local": "vite",
+    "dev:reset": "shopify app dev --reset",
+    "build": "remix vite:build",
+    "start": "remix-serve ./build/server/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "setup": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.4.1",
+    "@remix-run/node": "^2.16.0",
+    "@remix-run/react": "^2.16.0",
+    "@remix-run/serve": "^2.16.0",
+    "@shopify/app-bridge-react": "^4.1.6",
+    "@shopify/polaris": "^13.9.4",
+    "@shopify/polaris-icons": "^9.3.1",
+    "@shopify/shopify-api": "^15.0.1",
+    "@shopify/shopify-app-remix": "^6.0.2",
+    "@shopify/shopify-app-session-storage-prisma": "^11.0.1",
+    "isbot": "^5.1.28",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^2.16.0",
+    "@types/node": "^22.13.9",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "prisma": "^6.4.1",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.0.7"
+  }
+}
