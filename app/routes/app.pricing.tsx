@@ -3,15 +3,17 @@
  * Storeanalysis - Pranshu Singh Baghel
  * 
  * Follows Shopify App Pricing Guidelines:
+ * https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing
  * - Recurring charges billed every 30 days in USD
+ * - 7-day risk-free trials for paid plans
  * - Transparent tier comparison and feature entitlements
- * - Proper plan badge handling (showing ONLY 'CURRENT PLAN' when active, not both)
- * - Safe redirect handling for Shopify App Billing approval
+ * - Strict badge handling: ONLY 'CURRENT PLAN' shown when active (no overlapping badges)
+ * - Safe redirect handling for Shopify App Billing approval and hosted plan selection
  */
 
-import React from "react";
+import React, { useState } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useFetcher } from "@remix-run/react";
 import {
   Page,
@@ -29,6 +31,7 @@ import {
 } from "@shopify/polaris";
 import { authenticate, MONTHLY_BASIC_PLAN, MONTHLY_PRO_PLAN } from "~/services/shopify.server";
 import { getShopPlan, updateShopPlan, PLAN_CONFIGS } from "~/services/billing.server";
+import { PricingModal } from "~/components/PricingModal";
 import type { PlanTier } from "~/types";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -48,18 +51,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
   }
 
-  // Handle Shopify App Pricing return URL parameters
+  // Handle Shopify App Pricing return URL parameters (case-insensitive)
   const url = new URL(request.url);
   const planHandle = url.searchParams.get("plan_handle");
   const chargeId = url.searchParams.get("charge_id");
 
   if (planHandle) {
-    if (planHandle.includes("Pro")) {
+    const normalized = planHandle.toLowerCase();
+    if (normalized.includes("pro")) {
       await updateShopPlan(shopDomain, "Pro", chargeId || undefined);
       activatedPlan = "Pro";
-    } else if (planHandle.includes("Basic")) {
+    } else if (normalized.includes("basic")) {
       await updateShopPlan(shopDomain, "Basic", chargeId || undefined);
       activatedPlan = "Basic";
+    } else if (normalized.includes("free")) {
+      await updateShopPlan(shopDomain, "Free", chargeId || undefined);
+      activatedPlan = "Free";
     }
   } else if (chargeId) {
     // Legacy charge approval fallback
@@ -76,6 +83,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     shopDomain,
     currentPlan,
     activatedPlan,
+    appHandle: process.env.SHOPIFY_APP_HANDLE || "storeanalysis",
   });
 };
 
@@ -85,19 +93,36 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const shopDomain = String(formData.get("shopDomain") || "storeanalysis-dev.myshopify.com");
 
   try {
-    const { billing, session } = await authenticate.admin(request);
+    const { billing, session, redirect: appRedirect } = await authenticate.admin(request);
+
+    // If Shopify App Pricing hosted plan selection is enabled, redirect to admin plan page
+    if (process.env.SHOPIFY_USE_MANAGED_PRICING === "true") {
+      const storeHandle = session.shop.replace(".myshopify.com", "");
+      const appHandle = process.env.SHOPIFY_APP_HANDLE || "storeanalysis";
+      return appRedirect(
+        `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`,
+        { target: "_top" }
+      );
+    }
+
+    // Dynamic test mode: true in development or when explicitly requested, false in live production
+    const isTest =
+      process.env.SHOPIFY_BILLING_TEST === "true" ||
+      process.env.NODE_ENV !== "production";
+
+    const appUrl = process.env.SHOPIFY_APP_URL || "";
 
     if (selectedPlan === "Basic") {
       await billing.request({
         plan: MONTHLY_BASIC_PLAN,
-        isTest: true,
-        returnUrl: `${process.env.SHOPIFY_APP_URL || ""}/app/pricing?plan_handle=Storeanalysis+Basic+Monthly`,
+        isTest,
+        returnUrl: `${appUrl}/app/pricing?plan_handle=Storeanalysis+Basic+Monthly`,
       });
     } else if (selectedPlan === "Pro") {
       await billing.request({
         plan: MONTHLY_PRO_PLAN,
-        isTest: true,
-        returnUrl: `${process.env.SHOPIFY_APP_URL || ""}/app/pricing?plan_handle=Storeanalysis+Pro+Monthly`,
+        isTest,
+        returnUrl: `${appUrl}/app/pricing?plan_handle=Storeanalysis+Pro+Monthly`,
       });
     } else {
       // Downgrade to Free tier
@@ -108,7 +133,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (error instanceof Response) {
       throw error;
     }
-    // Development or test fallback
+    // Development or test fallback simulation
     console.warn("[Pricing] Direct plan update simulation:", error);
     await updateShopPlan(shopDomain, selectedPlan);
   }
@@ -119,6 +144,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function PricingPage() {
   const { currentPlan, shopDomain, activatedPlan } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof action>();
+  const [modalOpen, setModalOpen] = useState(false);
 
   const isSubmitting = fetcher.state === "submitting";
 
@@ -178,6 +204,10 @@ export default function PricingPage() {
     <Page
       title="Storeanalysis Subscription Plans"
       subtitle="Transparent pricing designed in accordance with Shopify App Pricing guidelines"
+      primaryAction={{
+        content: "Quick Plan Modal",
+        onAction: () => setModalOpen(true),
+      }}
     >
       <BlockStack gap="500">
         {activatedPlan && (
@@ -211,7 +241,7 @@ export default function PricingPage() {
                       <Text as="h3" variant="headingLg" fontWeight="bold">
                         {p.name}
                       </Text>
-                      {/* Task 1: Show ONLY 'CURRENT PLAN' when selected, not 'MOST POPULAR' */}
+                      {/* Guideline requirement: Show ONLY 'CURRENT PLAN' when selected, not 'MOST POPULAR' */}
                       {isCurrent ? (
                         <Badge tone="success">CURRENT PLAN</Badge>
                       ) : p.popular ? (
@@ -260,7 +290,7 @@ export default function PricingPage() {
                       }}
                       fullWidth
                     >
-                      {isCurrent ? "Active Plan" : `Choose ${p.name}`}
+                      {isCurrent ? "Active Plan" : isSubmitting ? "Processing..." : `Choose ${p.name}`}
                     </Button>
                   </BlockStack>
                 </Card>
@@ -282,7 +312,7 @@ export default function PricingPage() {
             </Text>
             <Text as="p" variant="bodyXs" tone="subdued">
               • <strong>Free Trials:</strong> Paid plans include a 7-day free trial. You will not be charged if you downgrade
-              or uninstall the app before the trial ends.
+              or cancel before the trial ends.
             </Text>
             <Text as="p" variant="bodyXs" tone="subdued">
               • <strong>Modifications & Cancellations:</strong> You can upgrade, downgrade, or cancel your subscription at
@@ -294,6 +324,14 @@ export default function PricingPage() {
             </Text>
           </BlockStack>
         </Card>
+
+        {/* Reusable Pricing Modal */}
+        <PricingModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          currentPlan={currentPlan}
+          shopDomain={shopDomain}
+        />
       </BlockStack>
     </Page>
   );

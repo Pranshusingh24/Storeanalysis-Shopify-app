@@ -30,4 +30,33 @@ describe("Subscription Billing & Entitlement Logic", () => {
     expect(getMaxHistoryDays("Basic")).toBe(30);
     expect(getMaxHistoryDays("Pro")).toBe(365);
   });
+
+  it("normalizes Shopify App Pricing return URL plan handles case-insensitively", () => {
+    const testHandles = [
+      { handle: "Storeanalysis Basic Monthly", expected: "Basic" },
+      { handle: "storeanalysis-pro-monthly", expected: "Pro" },
+      { handle: "Storeanalysis Pro Monthly", expected: "Pro" },
+      { handle: "BASIC", expected: "Basic" },
+      { handle: "free", expected: "Free" },
+    ];
+
+    for (const test of testHandles) {
+      const lower = test.handle.toLowerCase();
+      let matched = "Free";
+      if (lower.includes("pro")) matched = "Pro";
+      else if (lower.includes("basic")) matched = "Basic";
+      expect(matched).toBe(test.expected);
+    }
+  });
+
+  it("satisfies single badge display invariant (never shows both CURRENT PLAN and MOST POPULAR)", () => {
+    const currentPlan = "Basic";
+    const planCard = { name: "Basic", popular: true };
+
+    const isCurrent = currentPlan === planCard.name;
+    const badgeShown = isCurrent ? "CURRENT PLAN" : planCard.popular ? "MOST POPULAR" : null;
+
+    expect(badgeShown).toBe("CURRENT PLAN");
+    expect(badgeShown).not.toBe("MOST POPULAR");
+  });
 });

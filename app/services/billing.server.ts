@@ -2,12 +2,15 @@
  * Subscription Billing & Entitlements Engine
  * Storeanalysis - Pranshu Singh Baghel
  * 
+ * Follows Shopify App Pricing Guidelines:
+ * https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing
  * Enforces server-side feature access and plan tier limits.
- * Exactly three plans: Free (₹0), Basic (₹799/mo), Pro (₹1,999/mo).
+ * Exactly three plans: Free ($0/mo), Basic ($9.99/mo), Pro ($29.99/mo).
  */
 
 import type { PlanTier, PlanFeatureLimits } from "~/types";
 import prisma from "./db.server";
+import { fetchActiveSubscription } from "./partner-api.server";
 
 export const PLAN_CONFIGS: Record<PlanTier, PlanFeatureLimits> = {
   Free: {
@@ -72,9 +75,12 @@ export async function requireFeatureEntitlement(
   const limits = PLAN_CONFIGS[currentPlan];
 
   const allowed = !!limits[feature];
-  const requiredPlan: PlanTier = feature === "hasProfitEstimates" || feature === "hasInventoryForecasting" || feature === "hasAdvancedAnalytics"
-    ? "Pro"
-    : "Basic";
+  const requiredPlan: PlanTier =
+    feature === "hasProfitEstimates" ||
+    feature === "hasInventoryForecasting" ||
+    feature === "hasAdvancedAnalytics"
+      ? "Pro"
+      : "Basic";
 
   return { allowed, currentPlan, requiredPlan };
 }
@@ -125,4 +131,31 @@ export async function updateShopPlan(
       });
     }
   }
+}
+
+/**
+ * Sync active subscription status with Shopify Partner API when available
+ */
+export async function syncSubscriptionFromPartnerAPI(
+  shopDomain: string,
+  shopGid: string
+): Promise<PlanTier> {
+  const activeSub = await fetchActiveSubscription(shopGid);
+  if (!activeSub) {
+    return await getShopPlan(shopDomain);
+  }
+
+  // Determine plan tier from subscription items
+  let detectedPlan: PlanTier = "Free";
+  if (activeSub.items && activeSub.items.length > 0) {
+    const handle = activeSub.items[0].handle.toLowerCase();
+    if (handle.includes("pro")) {
+      detectedPlan = "Pro";
+    } else if (handle.includes("basic")) {
+      detectedPlan = "Basic";
+    }
+  }
+
+  await updateShopPlan(shopDomain, detectedPlan);
+  return detectedPlan;
 }

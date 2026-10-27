@@ -3,16 +3,18 @@
  * Storeanalysis - Pranshu Singh Baghel
  */
 
+import React, { useState } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
-import { Badge, InlineStack, Text, Box } from "@shopify/polaris";
+import { Badge, InlineStack, Text, Box, Button } from "@shopify/polaris";
 import { AppProvider as ShopifyAppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-remix/server";
 import { authenticate } from "~/services/shopify.server";
 import { getShopPlan } from "~/services/billing.server";
+import { PricingModal } from "~/components/PricingModal";
 import type { PlanTier } from "~/types";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
@@ -44,6 +46,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function AppLayout() {
   const { apiKey, shopDomain, plan } = useLoaderData<typeof loader>();
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
   const planBadgeTone: "success" | "info" | undefined =
     plan === "Pro" ? "success" : plan === "Basic" ? "info" : undefined;
@@ -98,6 +101,13 @@ export default function AppLayout() {
                 Store: <strong>{shopDomain}</strong>
               </Text>
               <Badge tone={planBadgeTone}>{`${plan} Plan`}</Badge>
+              <Button
+                size="micro"
+                variant={plan === "Pro" ? "plain" : "primary"}
+                onClick={() => setPricingModalOpen(true)}
+              >
+                {plan === "Pro" ? "Manage Plan" : "Upgrade"}
+              </Button>
             </InlineStack>
           </InlineStack>
         </Box>
@@ -106,6 +116,14 @@ export default function AppLayout() {
         <Box padding="400">
           <Outlet />
         </Box>
+
+        {/* Global Pricing Modal accessible anywhere */}
+        <PricingModal
+          open={pricingModalOpen}
+          onClose={() => setPricingModalOpen(false)}
+          currentPlan={plan}
+          shopDomain={shopDomain}
+        />
       </Box>
     </ShopifyAppProvider>
   );

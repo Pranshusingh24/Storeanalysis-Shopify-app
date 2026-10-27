@@ -173,6 +173,21 @@ npm test
 
 ---
 
+## 🌐 Hosting & Production Deployment
+
+For complete, step-by-step instructions on deploying Storeanalysis to a 24/7 cloud hosting service (Render, Fly.io, Railway, Docker, or VPS) and linking it to your Shopify Partner store, please read:
+
+👉 **[Complete Deployment & Hosting Guide (DEPLOYMENT.md)](DEPLOYMENT.md)**
+
+### Quick Reference:
+- **Client ID**: `75d14d5d475920324080eb0fcb850342`
+- **Development Store**: `my-store-5-m7gazbx4.myshopify.com`
+- **Instant Preview Link**: [Open Storeanalysis in Shopify Admin](https://admin.shopify.com/store/my-store-5-m7gazbx4/apps/75d14d5d475920324080eb0fcb850342?dev-console=show)
+- **Production Build**: `npm run build`
+- **Deploy Configuration**: `shopify app deploy`
+
+---
+
 ## 🔒 Security & Privacy Architecture
 
 1. **Least-Privilege Scopes**: Requests only `read_orders`, `read_all_orders`, `read_products`, and `read_inventory`.
